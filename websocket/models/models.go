@@ -139,6 +139,13 @@ type EquityTrade struct {
 	// The sequence number represents the sequence in which message events happened. These are increasing and unique per
 	// ticker symbol, but will not always be sequential (e.g., 1, 2, 6, 9, 10, 11).
 	SequenceNumber int64 `json:"q,omitempty"`
+
+	// The ID for the Trade Reporting Facility where the trade took place.
+	TradeReportingFacilityID int64 `json:"trfi,omitempty"`
+
+	// The TRF (Trade Reporting Facility) Timestamp in Unix MS.
+	// This is the timestamp of when the trade reporting facility received this trade.
+	TradeReportingFacilityTimestamp int64 `json:"trft,omitempty"`
 }
 
 // CryptoTrade is a trade for a crypto pair.
@@ -147,7 +154,7 @@ type CryptoTrade struct {
 	EventType
 
 	// The crypto pair.
-	Symbol string `json:"sym,omitempty"`
+	Pair string `json:"pair,omitempty"`
 
 	// The crypto exchange ID.
 	Exchange int32 `json:"x,omitempty"`
