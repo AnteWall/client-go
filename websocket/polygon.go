@@ -185,9 +185,11 @@ func newConn(uri string) (*websocket.Conn, error) {
 	if err := conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
 		return nil, fmt.Errorf("failed to set read deadline: %w", err)
 	}
-	conn.SetPongHandler(func(string) error {
-		return conn.SetReadDeadline(time.Now().Add(pongWait))
-	})
+	conn.SetPongHandler(
+		func(string) error {
+			return conn.SetReadDeadline(time.Now().Add(pongWait))
+		},
+	)
 
 	return conn, nil
 }
@@ -203,10 +205,12 @@ func (c *Client) connect(reconnect bool) func() error {
 
 		// reset write queue and push auth message
 		c.wQueue = make(chan json.RawMessage, 1000)
-		auth, err := json.Marshal(models.ControlMessage{
-			Action: models.Auth,
-			Params: c.apiKey,
-		})
+		auth, err := json.Marshal(
+			models.ControlMessage{
+				Action: models.Auth,
+				Params: c.apiKey,
+			},
+		)
 		if err != nil {
 			return fmt.Errorf("failed to marshal auth message: %w", err)
 		}
@@ -267,12 +271,14 @@ func (c *Client) close(reconnect bool) {
 	c.rwtomb.Kill(nil)
 	if err := c.rwtomb.Wait(); err != nil {
 		c.log.Errorf("r/w threads closed: %v", err)
+		c.err <- err
 	}
 
 	if !reconnect {
 		c.ptomb.Kill(nil)
 		if err := c.ptomb.Wait(); err != nil {
 			c.log.Errorf("process thread closed: %v", err)
+			c.err <- err
 		}
 		c.shouldClose = true
 		c.closeOutput()
@@ -319,7 +325,11 @@ func (c *Client) write() error {
 	for {
 		select {
 		case <-c.rwtomb.Dying():
-			if err := c.conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""), time.Now().Add(writeWait)); err != nil {
+			if err := c.conn.WriteControl(
+				websocket.CloseMessage,
+				websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""),
+				time.Now().Add(writeWait),
+			); err != nil {
 				return fmt.Errorf("failed to gracefully close: %w", err)
 			}
 			return nil
